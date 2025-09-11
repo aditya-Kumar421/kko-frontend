@@ -1,16 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    AlertCircle,
-    Bot,
-    CheckCircle,
-    Clock,
-    Copy,
-    FileText,
-    Loader2,
-    MessageSquare,
-    Send,
-    Sparkles,
-    User
+  AlertCircle,
+  Bot,
+  CheckCircle,
+  Clock,
+  Copy,
+  Loader2,
+  MessageSquare,
+  Send,
+  Sparkles,
+  User
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';

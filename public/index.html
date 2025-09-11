@@ -162,9 +162,8 @@
     <!-- React App Root -->
     <div id="root"></div>
     
-    <!-- Service Worker Registration -->
+    <!-- Loading Screen Script -->
     <script>
-      // Remove loading screen when app is ready
       window.addEventListener('load', () => {
         setTimeout(() => {
           document.body.classList.add('loaded');
@@ -176,19 +175,6 @@
           }, 500);
         }, 1000);
       });
-      
-      // Service Worker registration (optional)
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
       
       // Performance monitoring
       window.addEventListener('load', () => {
