@@ -468,8 +468,7 @@ const Analytics = () => {
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* Activity Heatmap */}
-      <HeatmapCard />
+    
 
       {/* Performance Summary */}
       <motion.div

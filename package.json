@@ -12,6 +12,7 @@
     "date-fns": "^2.30.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.263.1",
+    "nodemon": "^3.1.10",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -36,6 +37,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "dev": "nodemon --watch src --ext ts,tsx --exec \"react-scripts start\"",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
