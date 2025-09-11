@@ -32,8 +32,15 @@ export const apiService = {
     return response.json();
   },
 
-  async getDocuments(page = 1, limit = 10) {
-    const response = await fetch(`${API_BASE_URL}/all?page=${page}&limit=${limit}`, {
+  async getDocuments(page = 1, limit = 10, options = {}) {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (options.search) params.set("search", options.search);
+    if (options.department) params.set("department", options.department);
+
+    const response = await fetch(`${API_BASE_URL}/all?${params.toString()}`, {
       headers: { accept: "application/json" },
     });
 
