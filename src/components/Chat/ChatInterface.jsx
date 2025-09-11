@@ -11,7 +11,7 @@ import {
   Sparkles,
   User
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 const translations = {
@@ -33,7 +33,13 @@ const translations = {
       'Summarize the safety protocols'
     ],
     sendHint: 'Press Enter to send, Shift+Enter for new line',
-    charCount: '{count}/1000'
+  charCount: '{count}/1000',
+  selectDocument: 'Select Document',
+  noSavedDocs: 'No saved documents',
+  changeDocument: 'Change Document'
+  ,
+  showQuickQuestions: 'Show Quick Questions',
+  hideQuickQuestions: 'Hide Quick Questions'
   },
   ml: {
     noDocument: 'ഡോക്യുമെന്റ് തിരഞ്ഞെടുത്തിട്ടില്ല',
@@ -53,14 +59,18 @@ const translations = {
       'സുരക്ഷാ പ്രോട്ടോക്കോളുകൾ സംഗ്രഹിക്കുക'
     ],
     sendHint: 'അയയ്ക്കാൻ എന്റർ അമർത്തുക, പുതിയ വരിക്ക് Shift+Enter',
-    charCount: '{count}/1000'
+  charCount: '{count}/1000',
+  selectDocument: 'ഡോക്യുമെന്റ് തിരഞ്ഞെടുക്കുക',
+  noSavedDocs: 'സംരക്ഷിച്ച ഡോക്യുമെന്റുകൾ ഇല്ല',
+  changeDocument: 'ഡോക്യുമെന്റ് മാറ്റുക'
+  ,
+  showQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ കാണിക്കുക',
+  hideQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ മറയ്ക്കുക'
   }
 };
 
 const MessageBubble = ({ message, isUser }) => {
   const [copied, setCopied] = useState(false);
-  const { state } = useApp();
-  const t = translations[state.language];
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -175,8 +185,8 @@ const QuickQuestions = ({ onQuestionSelect }) => {
         {t.quickQuestions.map((question, index) => (
           <motion.button
             key={index}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.0 }}
+            whileTap={{ scale: 1 }}
             onClick={() => onQuestionSelect(question)}
             className="text-left p-3 bg-secondary-800/30 hover:bg-secondary-800/50 border border-secondary-700/50 hover:border-primary-600/50 rounded-lg text-sm text-secondary-300 hover:text-white transition-all duration-200"
           >
@@ -193,7 +203,32 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const t = translations[state.language];
+  const [showQuickQuestions, setShowQuickQuestions] = useState(() => {
+    try {
+      const v = localStorage.getItem('showQuickQuestions');
+      return v === null ? true : JSON.parse(v);
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('showQuickQuestions', JSON.stringify(showQuickQuestions));
+    } catch {}
+  }, [showQuickQuestions]);
+
+  const availableDocs = useMemo(() => {
+    if (state.documents && state.documents.length) return state.documents;
+    try {
+      const stored = JSON.parse(localStorage.getItem('documents') || '[]');
+      return Array.isArray(stored) ? stored : [];
+    } catch {
+      return [];
+    }
+  }, [state.documents]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -226,6 +261,31 @@ const ChatInterface = () => {
     if (state.loading) return;
     setMessage(question);
     inputRef.current?.focus();
+  };
+
+  const handleChooseFile = () => fileInputRef.current?.click();
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await actions.uploadDocument(file);
+      actions.clearMessages();
+      setMessage('');
+    } catch (err) {
+      // error handled via context
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleSelectDocument = (e) => {
+    const id = e.target.value;
+    const doc = availableDocs.find(d => (d.mongo_id || d._id) === id);
+    if (doc) {
+      actions.setCurrentDocument(doc);
+      actions.clearMessages();
+      setMessage('');
+    }
   };
 
   const containerVariants = {
@@ -274,6 +334,43 @@ const ChatInterface = () => {
           <div className="flex items-center space-x-2 text-sm">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-secondary-400">{state.language === 'ml' ? 'എഐ തയ്യാറാണ്' : 'AI Ready'}</span>
+            <button
+              onClick={() => setShowQuickQuestions((v) => !v)}
+              className="ml-3 px-3 py-1 rounded-md border border-secondary-700 text-secondary-300 hover:text-white hover:border-primary-500"
+            >
+              {showQuickQuestions ? t.hideQuickQuestions : t.showQuickQuestions}
+            </button>
+          </div>
+        </div>
+
+        {/* Document controls */}
+        <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {availableDocs.length > 0 ? (
+              <select
+                onChange={handleSelectDocument}
+                value={state.currentDocument?.mongo_id || state.currentDocument?._id || ''}
+                className="px-3 py-2 rounded-lg bg-secondary-900 border border-secondary-700 text-sm text-white focus:outline-none focus:border-primary-500"
+              >
+                <option value="">{t.selectDocument}</option>
+                {availableDocs.map((doc) => (
+                  <option key={doc.mongo_id || doc._id} value={doc.mongo_id || doc._id}>
+                    {doc.filename}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-secondary-400 text-sm">{t.noSavedDocs}</span>
+            )}
+          </div>
+          <div>
+            <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+            <button
+              onClick={handleChooseFile}
+              className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm"
+            >
+              {t.uploadDocument}
+            </button>
           </div>
         </div>
       </motion.div>
@@ -294,7 +391,36 @@ const ChatInterface = () => {
               </motion.div>
               <h3 className="text-lg font-semibold text-white mb-2">{t.startConversation}</h3>
               <p className="text-secondary-400 mb-6 max-w-md">{t.conversationMessage}</p>
-              <QuickQuestions onQuestionSelect={handleQuickQuestion} />
+              {!state.currentDocument && (
+                <div className="mb-6 flex flex-col sm:flex-row items-center gap-3">
+                  {availableDocs.length > 0 && (
+                    <select
+                      onChange={handleSelectDocument}
+                      value={''}
+                      className="px-3 py-2 rounded-lg bg-secondary-900 border border-secondary-700 text-sm text-white focus:outline-none focus:border-primary-500"
+                    >
+                      <option value="">{t.selectDocument}</option>
+                      {availableDocs.map((doc) => (
+                        <option key={doc.mongo_id || doc._id} value={doc.mongo_id || doc._id}>
+                          {doc.filename}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <div>
+                    <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+                    <button
+                      onClick={handleChooseFile}
+                      className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm"
+                    >
+                      {t.uploadDocument}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {showQuickQuestions && (
+                <QuickQuestions onQuestionSelect={handleQuickQuestion} />
+              )}
             </div>
           ) : (
             <>
@@ -306,6 +432,10 @@ const ChatInterface = () => {
                 />
               ))}
               {state.loading && <TypingIndicator />}
+              {/* Keep quick questions visible even after the first message (toggleable) */}
+              {showQuickQuestions && (
+                <QuickQuestions onQuestionSelect={handleQuickQuestion} />
+              )}
               <div ref={messagesEndRef} />
             </>
           )}
