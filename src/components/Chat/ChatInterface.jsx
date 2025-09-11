@@ -5,10 +5,14 @@ import {
   CheckCircle,
   Clock,
   Copy,
+  Mic,
+  MicOff,
   Loader2,
   MessageSquare,
   Send,
   Sparkles,
+  Volume2,
+  VolumeX,
   User
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -40,6 +44,10 @@ const translations = {
   ,
   showQuickQuestions: 'Show Quick Questions',
   hideQuickQuestions: 'Hide Quick Questions'
+  ,
+  listen: 'Listen',
+  stop: 'Stop',
+  readLatest: 'Read Latest Reply'
   },
   ml: {
     noDocument: 'ഡോക്യുമെന്റ് തിരഞ്ഞെടുത്തിട്ടില്ല',
@@ -66,10 +74,14 @@ const translations = {
   ,
   showQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ കാണിക്കുക',
   hideQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ മറയ്ക്കുക'
+  ,
+  listen: 'കേൾക്കുക',
+  stop: 'നിർത്തുക',
+  readLatest: 'അവസാന മറുപടി വായിക്കുക'
   }
 };
 
-const MessageBubble = ({ message, isUser }) => {
+const MessageBubble = ({ message, isUser, onRead, onStop, isReading }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -102,7 +114,7 @@ const MessageBubble = ({ message, isUser }) => {
         </motion.div>
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           <div
-            className={`relative px-4 py-3 rounded-xl backdrop-blur-sm border ${
+            className={`group relative px-4 py-3 rounded-xl backdrop-blur-sm border ${
               isUser
                 ? 'bg-primary-600/10 border-primary-600/30 text-primary-100'
                 : message.type === 'error'
@@ -114,16 +126,30 @@ const MessageBubble = ({ message, isUser }) => {
               {message.content}
             </p>
             {!isUser && message.type !== 'error' && (
-              <button
-                onClick={handleCopy}
-                className="absolute top-2 right-2 p-1 text-secondary-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-              >
-                {copied ? (
-                  <CheckCircle className="w-3 h-3" />
-                ) : (
-                  <Copy className="w-3 h-3" />
-                )}
-              </button>
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={isReading ? onStop : onRead}
+                  title={isReading ? 'Stop' : 'Listen'}
+                  className="p-1 text-secondary-400 hover:text-white transition-colors"
+                >
+                  {isReading ? (
+                    <VolumeX className="w-3 h-3" />
+                  ) : (
+                    <Volume2 className="w-3 h-3" />
+                  )}
+                </button>
+                <button
+                  onClick={handleCopy}
+                  title="Copy"
+                  className="p-1 text-secondary-400 hover:text-white transition-colors"
+                >
+                  {copied ? (
+                    <CheckCircle className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
             )}
           </div>
           <div className="flex items-center mt-1 text-xs text-secondary-500">
@@ -205,6 +231,14 @@ const ChatInterface = () => {
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const t = translations[state.language];
+  // Text-to-Speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingText, setSpeakingText] = useState('');
+  const utteranceRef = useRef(null);
+  const audioRef = useRef(null);
+  const audioUrlRef = useRef(null);
+  const [voices, setVoices] = useState([]);
+  const voicesLoadedRef = useRef(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(() => {
     try {
       const v = localStorage.getItem('showQuickQuestions');
@@ -213,6 +247,39 @@ const ChatInterface = () => {
       return true;
     }
   });
+  // Speech-to-Text state
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const recognitionRef = useRef(null);
+
+  // Load voices for Web Speech API (some browsers load them asynchronously)
+  useEffect(() => {
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    if (!synth) return;
+    const loadVoices = () => {
+      const list = synth.getVoices();
+      if (list && list.length) {
+        setVoices(list);
+        voicesLoadedRef.current = true;
+      }
+    };
+    loadVoices();
+    if (typeof synth.onvoiceschanged !== 'undefined') {
+      synth.onvoiceschanged = loadVoices;
+    } else {
+      // Fallback: retry a couple of times
+      let tries = 0;
+      const id = setInterval(() => {
+        if (voicesLoadedRef.current || tries > 10) {
+          clearInterval(id);
+          return;
+        }
+        tries += 1;
+        loadVoices();
+      }, 300);
+      return () => clearInterval(id);
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -240,6 +307,11 @@ const ChatInterface = () => {
 
   const handleSend = async () => {
     if (!message.trim() || state.loading) return;
+    // Stop listening if currently recording
+    if (isListening) {
+      try { recognitionRef.current?.stop(); } catch {}
+      setIsListening(false);
+    }
 
     const currentMessage = message;
     setMessage('');
@@ -287,6 +359,246 @@ const ChatInterface = () => {
       setMessage('');
     }
   };
+
+  // Text-to-Speech helpers
+  const stopSpeaking = () => {
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {}
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+      }
+    } catch {}
+    setIsSpeaking(false);
+    setSpeakingText('');
+    utteranceRef.current = null;
+    audioRef.current = null;
+    audioUrlRef.current = null;
+  };
+
+  // Helpers to detect language within the text
+  const hasMalayalam = (s = '') => /[\u0D00-\u0D7F]/.test(s);
+  const detectLangBlock = (s = '') => (hasMalayalam(s) ? 'ml' : 'en');
+
+  const mergeAdjacentSameLang = (segments) => {
+    const merged = [];
+    for (const seg of segments) {
+      if (!seg.text) continue;
+      if (merged.length && merged[merged.length - 1].lang === seg.lang) {
+        merged[merged.length - 1].text += seg.text;
+      } else {
+        merged.push({ ...seg });
+      }
+    }
+    return merged;
+  };
+
+  const splitByLanguage = (text = '') => {
+    // Split into runs of Malayalam vs non-Malayalam
+    const parts = text.match(/[\u0D00-\u0D7F]+|[^\u0D00-\u0D7F]+/g) || [text];
+    const segments = [];
+    for (const part of parts) {
+      const lang = detectLangBlock(part);
+      segments.push({ text: part, lang });
+    }
+    return mergeAdjacentSameLang(segments);
+  };
+
+  const speakText = (text) => {
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    if (!synth || !text) return;
+
+    // Toggle if same text is already speaking
+    if (isSpeaking && speakingText === text) {
+      stopSpeaking();
+      return;
+    }
+
+    // Cancel any ongoing speech
+    try { synth.cancel(); } catch {}
+
+    // Prepare segments by language to support mixed-language replies
+    const segments = splitByLanguage(text);
+
+    const getBestVoice = (preferredLang) => {
+      const lc = (preferredLang || '').toLowerCase();
+      // Exact lang match first (e.g., ml-IN or en-US)
+      const exact = voices.find(v => (v.lang || '').toLowerCase().startsWith(lc));
+      if (exact) return exact;
+      if (lc === 'ml') {
+        const byName = voices.find(v => (v.name || '').toLowerCase().includes('malayalam'));
+        if (byName) return byName;
+        const enIn = voices.find(v => (v.lang || '').toLowerCase().startsWith('en-in'));
+        if (enIn) return enIn;
+      }
+      // Generic English fallback
+      return voices.find(v => (v.lang || '').toLowerCase().startsWith('en-us'))
+        || voices.find(v => (v.lang || '').toLowerCase().startsWith('en'))
+        || null;
+    };
+
+    let idx = 0;
+    setIsSpeaking(true);
+    setSpeakingText(text);
+
+    const endpoint = process.env.REACT_APP_TTS_ENDPOINT;
+
+    const speakNext = async () => {
+      if (!segments || idx >= segments.length) {
+        setIsSpeaking(false);
+        setSpeakingText('');
+        utteranceRef.current = null;
+        if (audioUrlRef.current) {
+          try { URL.revokeObjectURL(audioUrlRef.current); } catch {}
+          audioUrlRef.current = null;
+        }
+        return;
+      }
+      const seg = segments[idx++];
+      const langPref = seg.lang; // 'ml' or 'en'
+      const voice = getBestVoice(langPref);
+
+      // If Malayalam segment and no local voice is available but we have a TTS endpoint, use cloud audio
+      if (langPref === 'ml' && !voice && endpoint) {
+        try {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: seg.text, lang: 'ml' }),
+          });
+          if (!res.ok) throw new Error('TTS endpoint error');
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          audioUrlRef.current = url;
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          audio.onended = () => {
+            if (isSpeaking) speakNext();
+          };
+          audio.onerror = () => {
+            if (isSpeaking) speakNext();
+          };
+          await audio.play();
+          return;
+        } catch (e) {
+          // If cloud TTS fails, fall back to English reading
+        }
+      }
+
+      // Use local speech synthesis for all other cases
+      const utter = new SpeechSynthesisUtterance(seg.text);
+      if (voice) {
+        utter.voice = voice;
+      } else {
+        utter.lang = langPref === 'ml' ? 'ml-IN' : 'en-US';
+      }
+      utter.rate = 1;
+      utter.pitch = 1;
+      utter.onend = () => {
+        if (isSpeaking) {
+          speakNext();
+        } else {
+          setIsSpeaking(false);
+          setSpeakingText('');
+          utteranceRef.current = null;
+        }
+      };
+      utter.onerror = () => {
+        if (isSpeaking) speakNext();
+      };
+      utteranceRef.current = utter;
+      try { synth.speak(utter); } catch (e) { if (isSpeaking) speakNext(); }
+    };
+
+    speakNext();
+  };
+
+  const readLatestReply = () => {
+    const lastAssistant = [...state.chatMessages].reverse().find(m => m.type !== 'user' && m.type !== 'error');
+    if (lastAssistant) {
+      if (isListening) {
+        try { recognitionRef.current?.stop(); } catch {}
+        setIsListening(false);
+        setInterimTranscript('');
+      }
+      speakText(lastAssistant.content);
+    }
+  };
+
+  // Speech-to-Text helpers
+  const startListening = () => {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        window.alert(state.language === 'ml' ? 'ഈ ബ്രൗസറിൽ വോയ്‌സ് ഇൻപുട്ട് ലഭ്യമല്ല' : 'Speech recognition is not supported in this browser.');
+        return;
+      }
+
+      // If already listening, toggle off
+      if (isListening) {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = state.language === 'ml' ? 'ml-IN' : 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) {
+            finalText += res[0].transcript;
+          } else {
+            interimText += res[0].transcript;
+          }
+        }
+        if (finalText) {
+          setMessage((prev) => {
+            const join = prev && !/\s$/.test(prev) ? ' ' : '';
+            return (prev || '') + join + finalText.trim();
+          });
+        }
+        setInterimTranscript(interimText);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+        setInterimTranscript('');
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    } catch (e) {
+      setIsListening(false);
+    }
+  };
+
+  const stopListening = () => {
+    try { recognitionRef.current?.stop(); } catch {}
+    setIsListening(false);
+    setInterimTranscript('');
+  };
+
+  // Cleanup recognition instance on unmount
+  useEffect(() => {
+    return () => {
+      try { recognitionRef.current?.stop(); } catch {}
+    };
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -429,6 +741,9 @@ const ChatInterface = () => {
                   key={index}
                   message={msg}
                   isUser={msg.type === 'user'}
+                  onRead={() => speakText(msg.content)}
+                  onStop={stopSpeaking}
+                  isReading={isSpeaking && speakingText === msg.content}
                 />
               ))}
               {state.loading && <TypingIndicator />}
@@ -442,24 +757,51 @@ const ChatInterface = () => {
         </div>
         <div className="border-t border-secondary-700/50 pt-6">
           <div className="flex items-end space-x-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <textarea
                 ref={inputRef}
-                value={message}
+                value={message + (isListening && interimTranscript ? (message && !/\s$/.test(message) ? ' ' : '') + interimTranscript : '')}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={t.askPlaceholder}
-                className="w-full px-4 py-3 bg-secondary-800/50 border border-secondary-700/50 rounded-xl text-white placeholder-secondary-400 resize-none focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                className="w-full pr-12 px-4 py-3 bg-secondary-800/50 border border-secondary-700/50 rounded-xl text-white placeholder-secondary-400 resize-none focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                 rows={3}
                 disabled={state.loading}
               />
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={isListening ? stopListening : startListening}
+                disabled={state.loading}
+                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                title={isListening ? (state.language === 'ml' ? 'വോയ്‌സ് ഇൻപുട്ട് നിർത്തുക' : 'Stop voice input') : (state.language === 'ml' ? 'വോയ്‌സ് ഇൻപുട്ട് ആരംഭിക്കുക' : 'Start voice input')}
+                className={`absolute bottom-2.5 right-2.5 h-9 w-9 flex items-center justify-center rounded-lg border ${isListening ? 'bg-red-600/90 hover:bg-red-600 text-white border-red-500/70' : 'bg-secondary-800/70 hover:bg-secondary-800/90 text-secondary-200 border-secondary-700/60'} shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </motion.button>
             </div>
-            <motion.button
+            <div className='flex flex-col items-center'>
+              <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={readLatestReply}
+              disabled={state.chatMessages.filter(m => m.type !== 'user' && m.type !== 'error').length === 0}
+              className="px-4 py-3  items-center  w-24 bg-secondary-800/50 hover:bg-secondary-800/70 border border-secondary-700/50 rounded-xl text-secondary-200 font-medium flex justify-center space-x-2 min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
+             
+            >
+              {isSpeaking ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+          
+            </motion.button>
+                 <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSend}
               disabled={!message.trim() || state.loading}
-              className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 disabled:cursor-not-allowed rounded-xl text-white font-medium flex items-center space-x-2 min-h-[48px]"
+              className="px-6 py-3 mt-1  w-24 justify-center bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 disabled:cursor-not-allowed rounded-xl text-white font-medium flex items-center space-x-2 min-h-[48px]"
             >
               {state.loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -467,6 +809,8 @@ const ChatInterface = () => {
                 <Send className="w-5 h-5" />
               )}
             </motion.button>
+            </div>
+         
           </div>
           <div className="flex items-center justify-between mt-2 text-xs text-secondary-500">
             <span>{t.sendHint}</span>
