@@ -153,6 +153,19 @@ export function AppProvider({ children }) {
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
     }
+
+    // Hydrate current document from localStorage (if present)
+    try {
+      const storedCurrent = localStorage.getItem("currentDocument");
+      if (storedCurrent) {
+        const parsed = JSON.parse(storedCurrent);
+        if (parsed && parsed.mongo_id) {
+          dispatch({ type: ACTION_TYPES.SET_CURRENT_DOCUMENT, payload: parsed });
+        }
+      }
+    } catch (e) {
+      // fail silently
+    }
   }, []);
 
   useEffect(() => {
@@ -173,10 +186,40 @@ export function AppProvider({ children }) {
       dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error }),
     setSuccess: (message) =>
       dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: message }),
-    addDocument: (document) =>
-      dispatch({ type: ACTION_TYPES.ADD_DOCUMENT, payload: document }),
-    setCurrentDocument: (document) =>
-      dispatch({ type: ACTION_TYPES.SET_CURRENT_DOCUMENT, payload: document }),
+    addDocument: (document) => {
+      // Update state
+      dispatch({ type: ACTION_TYPES.ADD_DOCUMENT, payload: document });
+
+      // Persist / merge into localStorage documents list
+      try {
+        const storedList = JSON.parse(localStorage.getItem("documents") || "[]");
+        const idx = storedList.findIndex((d) => d.mongo_id === document.mongo_id);
+        if (idx >= 0) {
+          storedList[idx] = document;
+        } else {
+          storedList.push(document);
+        }
+        localStorage.setItem("documents", JSON.stringify(storedList));
+      } catch (e) {
+        // ignore persistence errors
+      }
+
+      // Set as current document & persist it
+      try {
+        localStorage.setItem("currentDocument", JSON.stringify(document));
+      } catch (e) {
+        // ignore
+      }
+      dispatch({ type: ACTION_TYPES.SET_CURRENT_DOCUMENT, payload: document });
+    },
+    setCurrentDocument: (document) => {
+      dispatch({ type: ACTION_TYPES.SET_CURRENT_DOCUMENT, payload: document });
+      try {
+        localStorage.setItem("currentDocument", JSON.stringify(document));
+      } catch (e) {
+        // ignore
+      }
+    },
     addChatMessage: (message) =>
       dispatch({ type: ACTION_TYPES.ADD_CHAT_MESSAGE, payload: message }),
     toggleTheme: () =>
@@ -217,6 +260,7 @@ export function AppProvider({ children }) {
         actions.addChatMessage({
           type: "user",
           content: question,
+          mongo_id: state.currentDocument.mongo_id,
           timestamp: new Date().toISOString(),
         });
 
@@ -227,6 +271,7 @@ export function AppProvider({ children }) {
         actions.addChatMessage({
           type: "assistant",
           content: result.answer,
+          mongo_id: state.currentDocument.mongo_id,
           timestamp: new Date().toISOString(),
         });
 
@@ -236,7 +281,8 @@ export function AppProvider({ children }) {
         actions.setError(error.message);
         actions.addChatMessage({
           type: "error",
-          content: "Failed to get response",
+          content: "Sorry I cannot find relevant details in the document.",
+          mongo_id: state.currentDocument?.mongo_id,
           timestamp: new Date().toISOString(),
         });
         throw error;

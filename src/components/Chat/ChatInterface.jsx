@@ -262,7 +262,12 @@ const ChatInterface = () => {
               <h1 className="text-2xl font-bold text-white">{t.aiAssistant}</h1>
               <p className="text-secondary-300">
                 {state.currentDocument
-                  ? `${state.language === 'ml' ? 'നിന്റെ ചോദ്യങ്ങൾ ചോദിക്കൂ: ' : 'Ask questions about: '} <span className="font-medium text-accent-300">{state.currentDocument.filename}</span>`
+                  ? (
+                    <>
+                      {state.language === 'ml' ? 'നിന്റെ ചോദ്യങ്ങൾ ചോദിക്കൂ: ' : 'Ask questions about: '}
+                      <span className="font-medium text-accent-300">{state.currentDocument.filename}</span>
+                    </>
+                  )
                   : t.noDocument}
               </p>
             </div>
