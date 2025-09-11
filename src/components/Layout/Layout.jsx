@@ -48,8 +48,8 @@ const Layout = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-secondary text-white relative z-10">
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden md:flex w-64 bg-secondary-900 border-r border-secondary-700/50 flex-col">
+  {/* Sidebar - Desktop */}
+  <div className="hidden md:flex fixed top-0 left-0 h-screen w-64 bg-secondary-900 border-r border-secondary-700/50 flex-col overflow-hidden">
         <div className="p-6">
           <h2 className="text-xl font-bold text-white mb-8">SoochiRail</h2>
           <nav className="space-y-2">
@@ -86,7 +86,7 @@ const Layout = ({ children }) => {
           <>
             {/* Overlay */}
             <motion.div
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 z-40 md:hidden "
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -135,8 +135,8 @@ const Layout = ({ children }) => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 lg:p-10">
+  {/* Main Content */}
+  <div className="flex-1 p-6 lg:p-10 md:ml-64">
         {/* Toggle Button for Mobile */}
         <button
           onClick={toggleSidebar}
