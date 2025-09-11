@@ -51,7 +51,7 @@ const Layout = ({ children }) => {
       {/* Sidebar - Desktop */}
       <div className="hidden md:flex w-64 bg-secondary-900 border-r border-secondary-700/50 flex-col">
         <div className="p-6">
-          <h2 className="text-xl font-bold text-white mb-8">KMRL KKO</h2>
+          <h2 className="text-xl font-bold text-white mb-8">SoochiRail</h2>
           <nav className="space-y-2">
             {navItems.map((item) => (
               <NavLink

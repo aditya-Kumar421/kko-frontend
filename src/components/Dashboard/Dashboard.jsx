@@ -1,35 +1,34 @@
 import { motion } from 'framer-motion';
 import {
-    Activity,
-    BarChart3,
-    Clock,
-    FileText,
-    MessageSquare,
-    TrendingUp,
-    Upload,
-    Users
+  Activity,
+  BarChart3,
+  Clock,
+  FileText,
+  MessageSquare,
+  TrendingUp,
+  Upload,
+  Users
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Area,
-    AreaChart,
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Legend,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
-
 const translations = {
   en: {
-    welcome: 'Welcome to KKO Dashboard',
+    welcome: 'Welcome to SoochiRail Dashboard',
     description: 'Your intelligent document processing and knowledge management system addressing information latency and siloed awareness.',
     totalDocuments: 'Total Documents',
     questionsAsked: 'Questions Asked',
@@ -48,7 +47,7 @@ const translations = {
     processingTime: 'Processing Time Distribution'
   },
   ml: {
-    welcome: 'KKO ഡാഷ്ബോർഡിലേക്ക് സ്വാഗതം',
+    welcome: 'SoochiRail ഡാഷ്ബോർഡിലേക്ക് സ്വാഗതം',
     description: 'വിവര വൈകല്യവും സിലോഡ് അവേർനെസും പരിഹരിക്കുന്ന നിന്റെ ബുദ്ധിപരമായ ഡോക്യുമെന്റ് പ്രോസസ്സിംഗും അറിവ് മാനേജ്മെന്റ് സിസ്റ്റവും.',
     totalDocuments: 'മൊത്തം ഡോക്യുമെന്റുകൾ',
     questionsAsked: 'ചോദിച്ച ചോദ്യങ്ങൾ',
@@ -100,6 +99,7 @@ const StatCard = ({ icon: Icon, label, value, change, color = "primary", trend }
     </div>
   </motion.div>
 );
+
 
 const QuickActionCard = ({ icon: Icon, title, description, action, color = "primary" }) => (
   <motion.button

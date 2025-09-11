@@ -7,57 +7,24 @@
     <meta name="theme-color" content="#1e40af" />
     <meta
       name="description"
-      content="KMRL Knowledge Orchestrator - Intelligent document processing and AI-powered knowledge management system for metro rail operations"
+      content="SoochiRail - Guided rail / document routing for KMRL, intelligent document processing and AI-powered knowledge management system"
     />
-    <meta name="keywords" content="KMRL, Metro Rail, Document Processing, AI, Knowledge Management, OCR, Machine Learning" />
+    <meta name="keywords" content="SoochiRail, KMRL, Metro Rail, Document Processing, AI, Knowledge Management, OCR, Machine Learning" />
     <meta name="author" content="KMRL Tech Team" />
-    
-    <!-- Open Graph meta tags -->
-    <meta property="og:title" content="KMRL Knowledge Orchestrator" />
-    <meta property="og:description" content="Intelligent document processing and AI-powered knowledge management system" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
-    
-    <!-- Twitter Card meta tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="KMRL Knowledge Orchestrator" />
-    <meta name="twitter:description" content="Intelligent document processing and AI-powered knowledge management system" />
-    <meta name="twitter:image" content="%PUBLIC_URL%/twitter-image.png" />
-    
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    
-    <!-- Preconnect to external domains for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Metro Rail themed favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M20 30h60v40H20z' fill='%231e40af'/%3E%3Cpath d='M25 35h50v30H25z' fill='%23ffffff'/%3E%3Ccircle cx='30' cy='75' r='5' fill='%231e40af'/%3E%3Ccircle cx='70' cy='75' r='5' fill='%231e40af'/%3E%3Cpath d='M10 80h80v5H10z' fill='%23374151'/%3E%3C/svg%3E">
-    
-    <title>KKO - KMRL Knowledge Orchestrator</title>
-    
-    <!-- Performance optimizations -->
-    <link rel="dns-prefetch" href="//kko-backend.adityakumar.live">
-    
-    <!-- Critical CSS inlined -->
+
+    <title>SoochiRail - KMRL Knowledge Orchestrator</title>
+
     <style>
       body {
         margin: 0;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+          'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+          'Helvetica Neue', sans-serif;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: #f8fafc;
         overflow-x: hidden;
       }
 
-      code {
-        font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-          monospace;
-      }
-      
       /* Loading screen */
       #loading-screen {
         position: fixed;
@@ -71,117 +38,130 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
-        transition: opacity 0.5s ease-out;
+        transition: opacity 0.6s ease-out;
       }
-      
+
       .loading-logo {
-        width: 80px;
-        height: 80px;
-        border: 3px solid #3b82f6;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 20px;
-        animation: pulse 2s infinite;
+        margin-bottom: 25px;
+        position: relative;
+        font-size: 60px;
       }
-      
+
+      /* Glowing pulse ring */
+      .loading-logo::before {
+        content: "";
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border: 3px solid #3b82f6;
+        border-radius: 50%;
+        animation: pulseGlow 2.5s infinite;
+      }
+
+      @keyframes pulseGlow {
+        0% { transform: scale(0.9); opacity: 0.6; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(0.9); opacity: 0.6; }
+      }
+
+      /* Emoji bounce animation */
+      .loading-logo span {
+        display: inline-block;
+        animation: bounce 1.2s infinite;
+      }
+
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
       .loading-text {
-        color: #f8fafc;
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 10px;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        animation: fadeIn 2s ease-in-out;
       }
-      
+
       .loading-subtitle {
         color: #94a3b8;
         font-size: 14px;
+        margin-bottom: 18px;
+        animation: fadeIn 2.5s ease-in-out;
       }
-      
-      @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-          opacity: 0.8;
-        }
-        50% {
-          transform: scale(1.1);
-          opacity: 1;
-        }
+
+      .loading-tagline {
+        text-align: center;
+        margin-top: 10px;
+        animation: fadeSlideUp 3s ease-in-out;
       }
-      
+
+      .loading-tagline span {
+        display: block;
+        font-size: 16px;
+        margin: 5px 0;
+      }
+
+      .loading-tagline .english {
+        font-weight: 500;
+        color: #f1f5f9;
+      }
+
+      .loading-tagline .malayalam {
+        font-weight: 500;
+        font-family: "Noto Sans Malayalam", sans-serif;
+        color: #cbd5e1;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       /* Hide loading screen after app loads */
       .loaded #loading-screen {
         opacity: 0;
         pointer-events: none;
       }
-      
-      /* Scrollbar styling */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      
-      ::-webkit-scrollbar-track {
-        background: #1e293b;
-      }
-      
-      ::-webkit-scrollbar-thumb {
-        background: #475569;
-        border-radius: 3px;
-      }
-      
-      ::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
-      }
     </style>
   </head>
   <body>
-    <noscript>
-      <div style="text-align: center; padding: 50px; background: #1e293b; color: #f8fafc;">
-        <h1>🚇 KMRL Knowledge Orchestrator</h1>
-        <p>You need to enable JavaScript to run this application.</p>
-        <p>This app requires JavaScript for AI-powered document processing and interactive features.</p>
-      </div>
-    </noscript>
-    
     <!-- Loading Screen -->
     <div id="loading-screen">
       <div class="loading-logo">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 12h24v16H8z" fill="#3b82f6"/>
-          <path d="M10 14h20v12H10z" fill="#ffffff"/>
-          <circle cx="12" cy="30" r="2" fill="#3b82f6"/>
-          <circle cx="28" cy="30" r="2" fill="#3b82f6"/>
-          <path d="M4 32h32v2H4z" fill="#475569"/>
-        </svg>
+        <span>🚇</span>
       </div>
-      <div class="loading-text">KMRL Knowledge Orchestrator</div>
+      <div class="loading-text">SoochiRail</div>
       <div class="loading-subtitle">Initializing AI systems...</div>
+      <div class="loading-tagline">
+        <span class="english">“Guided Knowledge Flow”</span>
+        <span class="malayalam">“അറിവ് മുന്നോട്ട് കൊണ്ടുപോകുന്നു”</span>
+      </div>
     </div>
-    
+
     <!-- React App Root -->
     <div id="root"></div>
-    
-    <!-- Loading Screen Script -->
+
+    <!-- Script to remove loader -->
     <script>
       window.addEventListener('load', () => {
         setTimeout(() => {
           document.body.classList.add('loaded');
           setTimeout(() => {
             const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-              loadingScreen.style.display = 'none';
-            }
-          }, 500);
-        }, 1000);
-      });
-      
-      // Performance monitoring
-      window.addEventListener('load', () => {
-        if ('performance' in window) {
-          const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-          console.log(`App loaded in ${loadTime}ms`);
-        }
+            if (loadingScreen) loadingScreen.style.display = 'none';
+          }, 600);
+        }, 1200);
       });
     </script>
   </body>
