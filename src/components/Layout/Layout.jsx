@@ -46,7 +46,8 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-secondary-950 text-white">
+    <div className="flex min-h-screen bg-secondary text-white relative z-10">
+
       {/* Sidebar - Desktop */}
       <div className="hidden md:flex w-64 bg-secondary-900 border-r border-secondary-700/50 flex-col">
         <div className="p-6">

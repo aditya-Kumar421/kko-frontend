@@ -1,69 +1,55 @@
-import { motion } from 'framer-motion';
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Analytics from './components/Analytics/Analytics';
-import ChatInterface from './components/Chat/ChatInterface';
-import Dashboard from './components/Dashboard/Dashboard';
-import DocumentViewer from './components/Document/DocumentViewer';
-import Layout from './components/Layout/Layout';
-import DocumentUpload from './components/Upload/DocumentUpload';
-import { AppProvider } from './context/AppContext';
-import './index.css';
+import { motion } from "framer-motion";
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+// Components
+import Analytics from "./components/Analytics/Analytics";
+import ChatInterface from "./components/Chat/ChatInterface";
+import Dashboard from "./components/Dashboard/Dashboard";
+import DocumentViewer from "./components/Document/DocumentViewer";
+import Layout from "./components/Layout/Layout";
+import DocumentUpload from "./components/Upload/DocumentUpload";
+
+// Context
+import { AppProvider } from "./context/AppContext";
+
+import "./index.css";
+
+/**
+ * Metro background with animated lines, stations, and particles
+ */
 const MetroBackground = () => (
-  <div className="fixed inset-0 z-0 overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-primary-950 opacity-95" />
-    
-    {/* Metro Rail Lines Animation */}
-    <div className="absolute inset-0">
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 bg-gradient-to-b from-primary-500/20 to-accent-500/20"
-          style={{
-            left: `${20 + i * 15}%`,
-            height: '120%',
-            top: '-10%',
-          }}
-          animate={{ y: ['-10%', '110%'] }}
-          transition={{
-            duration: 8 + i * 2,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: i * 1.5,
-          }}
-        />
-      ))}
-      
-      {/* Horizontal lines */}
-      {[...Array(3)].map((_, i) => (
-        <motion.div
-          key={`h-${i}`}
-          className="absolute h-1 bg-gradient-to-r from-metro-blue/20 to-metro-green/20"
-          style={{
-            top: `${30 + i * 20}%`,
-            width: '120%',
-            left: '-10%',
-          }}
-          animate={{ x: ['-10%', '110%'] }}
-          transition={{
-            duration: 10 + i * 3,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: i * 2,
-          }}
-        />
-      ))}
-    </div>
+  <div className="fixed inset-0 -z+1 overflow-hidden">
+    {/* 🔹 Background video */}
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="absolute inset-0 w-full h-full object-cover opacity-10"
+    >
+      <source src="/assets/Kochi_Metro_Video_Generation.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    Gradient overlay
+    <div className="absolute inset-0 bg-gradient-to-br from-secondary-950/60 via-secondary-900/50 to-primary-950/60" />
+
+   
 
     {/* Metro Stations */}
     <div className="absolute inset-0">
       {[
-        { top: '20%', left: '15%', color: 'metro-blue' },
-        { top: '40%', left: '70%', color: 'metro-green' },
-        { top: '70%', left: '25%', color: 'metro-orange' },
-        { top: '85%', left: '80%', color: 'metro-red' },
+        { top: "20%", left: "15%", color: "metro-blue" },
+        { top: "40%", left: "70%", color: "metro-green" },
+        { top: "70%", left: "25%", color: "metro-orange" },
+        { top: "85%", left: "80%", color: "metro-red" },
       ].map((station, i) => (
         <motion.div
           key={i}
@@ -75,7 +61,9 @@ const MetroBackground = () => (
           }}
           transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}
         >
-          <div className={`absolute inset-0 bg-${station.color} rounded-full animate-ping`} />
+          <div
+            className={`absolute inset-0 bg-${station.color} rounded-full animate-ping`}
+          />
         </motion.div>
       ))}
     </div>
@@ -85,7 +73,7 @@ const MetroBackground = () => (
       {[...Array(20)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-primary-400/20 rounded-full"
+          className="absolute w-2 h-2 bg-primary-400/30 rounded-full"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
@@ -104,7 +92,7 @@ const MetroBackground = () => (
       ))}
     </div>
 
-    {/* Metro pattern overlay */}
+    {/* Pattern Overlay */}
     <div className="absolute inset-0 bg-metro-pattern opacity-5" />
   </div>
 );
@@ -114,7 +102,10 @@ function App() {
     <AppProvider>
       <Router>
         <div className="min-h-screen bg-secondary-950 text-white font-metro relative overflow-hidden">
+          {/* Background */}
           <MetroBackground />
+
+          {/* Foreground */}
           <div className="relative z-10">
             <Layout>
               <Routes>
@@ -129,6 +120,7 @@ function App() {
             </Layout>
           </div>
 
+          {/* Toasts */}
           <ToastContainer
             position="bottom-right"
             autoClose={3000}
