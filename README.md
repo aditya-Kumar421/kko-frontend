@@ -1,4 +1,4 @@
-# 🚇 KMRL Knowledge Orchestrator (SoochiRail Dashboard)
+# 🚇 KMRL Knowledge Orchestrator
 
 A sophisticated **intelligent document processing and knowledge management system** designed specifically for Kochi Metro.
 
