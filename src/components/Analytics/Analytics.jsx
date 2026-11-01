@@ -12,7 +12,7 @@ import {
     Users,
     Zap
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -31,7 +31,6 @@ import {
     XAxis,
     YAxis
 } from 'recharts';
-import { useApp } from '../../context/AppContext';
 
 // Comprehensive mock data for analytics
 const generateAnalyticsData = () => {
@@ -136,71 +135,8 @@ const ChartCard = ({ title, icon: Icon, children, fullWidth = false }) => (
   </motion.div>
 );
 
-const HeatmapCard = () => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const hours = [...Array(24)].map((_, i) => i);
-  
-  const generateHeatmapData = () => {
-    return days.map(day => 
-      hours.map(hour => ({
-        day,
-        hour,
-        value: Math.random() * 100,
-      }))
-    ).flat();
-  };
-
-  const [heatmapData] = useState(generateHeatmapData());
-
-  return (
-    <ChartCard title="Activity Heatmap" icon={Activity} fullWidth>
-      <div className="grid grid-cols-24 gap-1">
-        {/* Hour labels */}
-        <div className="col-span-24 grid grid-cols-24 gap-1 mb-2">
-          {hours.map(hour => (
-            <div key={hour} className="text-xs text-secondary-400 text-center">
-              {hour}
-            </div>
-          ))}
-        </div>
-        
-        {/* Heatmap grid */}
-        {days.map(day => (
-          <React.Fragment key={day}>
-            <div className="text-xs text-secondary-400 flex items-center justify-end pr-2">
-              {day}
-            </div>
-            {hours.map(hour => {
-              const dataPoint = heatmapData.find(d => d.day === day && d.hour === hour);
-              const intensity = Math.floor(dataPoint.value / 25);
-              return (
-                <motion.div
-                  key={`${day}-${hour}`}
-                  whileHover={{ scale: 1.2 }}
-                  className={`aspect-square rounded-sm cursor-pointer transition-all ${
-                    intensity === 0 ? 'bg-secondary-700/30' :
-                    intensity === 1 ? 'bg-primary-600/30' :
-                    intensity === 2 ? 'bg-primary-600/60' :
-                    intensity === 3 ? 'bg-primary-600/90' : 'bg-primary-600'
-                  }`}
-                  title={`${day} ${hour}:00 - Activity: ${Math.floor(dataPoint.value)}`}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: (days.indexOf(day) * 24 + hour) * 0.01 }}
-                />
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
-    </ChartCard>
-  );
-};
-
 const Analytics = () => {
-  const { state } = useApp();
   const [timeRange, setTimeRange] = useState('30d');
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [analyticsData] = useState(generateAnalyticsData());
 
   const timeRanges = [
