@@ -17,69 +17,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-
-const translations = {
-  en: {
-    noDocument: 'No Document Selected',
-    noDocumentMessage: 'Please upload a document first to start chatting with the AI assistant.',
-    uploadDocument: 'Upload Document',
-    aiAssistant: 'AI Assistant',
-    askPlaceholder: 'Ask me about the document...',
-    startConversation: 'Start a Conversation',
-    conversationMessage: 'I m ready to help you understand and analyze your document. Ask me anything!',
-    quickQuestionsTitle: 'Quick Questions',
-    quickQuestions: [
-      'What is the main topic of this document?',
-      'What are the key action items mentioned?',
-      'Which departments are involved?',
-      'Are there any deadlines mentioned?',
-      'What are the compliance requirements?',
-      'Summarize the safety protocols'
-    ],
-    sendHint: 'Press Enter to send, Shift+Enter for new line',
-  charCount: '{count}/1000',
-  selectDocument: 'Select Document',
-  noSavedDocs: 'No saved documents',
-  changeDocument: 'Change Document'
-  ,
-  showQuickQuestions: 'Show Quick Questions',
-  hideQuickQuestions: 'Hide Quick Questions'
-  ,
-  listen: 'Listen',
-  stop: 'Stop',
-  readLatest: 'Read Latest Reply'
-  },
-  ml: {
-    noDocument: 'ഡോക്യുമെന്റ് തിരഞ്ഞെടുത്തിട്ടില്ല',
-    noDocumentMessage: 'എഐ അസിസ്റ്റന്റുമായി ചാറ്റ് ആരംഭിക്കുന്നതിന് ആദ്യം ഒരു ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക.',
-    uploadDocument: 'ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക',
-    aiAssistant: 'എഐ അസിസ്റ്റന്റ്',
-    askPlaceholder: 'ഡോക്യുമെന്റിനെക്കുറിച്ച് എന്നോട് ചോദിക്കൂ...',
-    startConversation: 'സംഭാഷണം ആരംഭിക്കുക',
-    conversationMessage: 'നിന്റെ ഡോക്യുമെന്റ് മനസ്സിലാക്കാനും വിശകലനം ചെയ്യാനും ഞാൻ തയ്യാറാണ്. എന്തും ചോദിക്കൂ!',
-    quickQuestionsTitle: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ',
-    quickQuestions: [
-      'ഈ ഡോക്യുമെന്റിന്റെ പ്രധാന വിഷയം എന്താണ്?',
-      'പ്രധാന പ്രവർത്തന ഇനങ്ങൾ ഏതൊക്കെയാണ്?',
-      'ഏതൊക്കെ വകുപ്പുകൾ ഉൾപ്പെട്ടിരിക്കുന്നു?',
-      'ഏതെങ്കിലും സമയപരിധികൾ പരാമർശിച്ചിട്ടുണ്ടോ?',
-      'നിയന്ത്രണ ആവശ്യകതകൾ എന്താണ്?',
-      'സുരക്ഷാ പ്രോട്ടോക്കോളുകൾ സംഗ്രഹിക്കുക'
-    ],
-    sendHint: 'അയയ്ക്കാൻ എന്റർ അമർത്തുക, പുതിയ വരിക്ക് Shift+Enter',
-  charCount: '{count}/1000',
-  selectDocument: 'ഡോക്യുമെന്റ് തിരഞ്ഞെടുക്കുക',
-  noSavedDocs: 'സംരക്ഷിച്ച ഡോക്യുമെന്റുകൾ ഇല്ല',
-  changeDocument: 'ഡോക്യുമെന്റ് മാറ്റുക'
-  ,
-  showQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ കാണിക്കുക',
-  hideQuickQuestions: 'പെട്ടെന്നുള്ള ചോദ്യങ്ങൾ മറയ്ക്കുക'
-  ,
-  listen: 'കേൾക്കുക',
-  stop: 'നിർത്തുക',
-  readLatest: 'അവസാന മറുപടി വായിക്കുക'
-  }
-};
+import { translations } from "../../locales/translations";
 
 const MessageBubble = ({ message, isUser, onRead, onStop, isReading }) => {
   const [copied, setCopied] = useState(false);
@@ -198,7 +136,7 @@ const TypingIndicator = () => (
 
 const QuickQuestions = ({ onQuestionSelect }) => {
   const { state } = useApp();
-  const t = translations[state.language];
+  const t = translations[state.language].chat;
 
   return (
     <motion.div
@@ -230,7 +168,7 @@ const ChatInterface = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const t = translations[state.language];
+  const t = translations[state.language].chat;
   // Text-to-Speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingText, setSpeakingText] = useState('');
@@ -535,7 +473,7 @@ const ChatInterface = () => {
     try {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        window.alert(state.language === 'ml' ? 'ഈ ബ്രൗസറിൽ വോയ്‌സ് ഇൻപുട്ട് ലഭ്യമല്ല' : 'Speech recognition is not supported in this browser.');
+        window.alert(t.speechRecognitionUnsupported);
         return;
       }
 
@@ -635,7 +573,7 @@ const ChatInterface = () => {
                 {state.currentDocument
                   ? (
                     <>
-                      {state.language === 'ml' ? 'നിന്റെ ചോദ്യങ്ങൾ ചോദിക്കൂ: ' : 'Ask questions about: '}
+                      {t.askQuestionsAbout}
                       <span className="font-medium text-accent-300">{state.currentDocument.filename}</span>
                     </>
                   )
@@ -645,7 +583,7 @@ const ChatInterface = () => {
           </div>
           <div className="flex items-center space-x-2 text-sm">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-secondary-400">{state.language === 'ml' ? 'എഐ തയ്യാറാണ്' : 'AI Ready'}</span>
+            <span className="text-secondary-400">{t.aiReady}</span>
             <button
               onClick={() => setShowQuickQuestions((v) => !v)}
               className="ml-3 px-3 py-1 rounded-md border border-secondary-700 text-secondary-300 hover:text-white hover:border-primary-500"
@@ -773,8 +711,8 @@ const ChatInterface = () => {
                 whileTap={{ scale: 0.97 }}
                 onClick={isListening ? stopListening : startListening}
                 disabled={state.loading}
-                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-                title={isListening ? (state.language === 'ml' ? 'വോയ്‌സ് ഇൻപുട്ട് നിർത്തുക' : 'Stop voice input') : (state.language === 'ml' ? 'വോയ്‌സ് ഇൻപുട്ട് ആരംഭിക്കുക' : 'Start voice input')}
+                aria-label={isListening ? t.stopVoiceInput : t.startVoiceInput}
+                title={isListening ? t.stopVoiceInput : t.startVoiceInput}
                 className={`absolute bottom-2.5 right-2.5 h-9 w-9 flex items-center justify-center rounded-lg border ${isListening ? 'bg-red-600/90 hover:bg-red-600 text-white border-red-500/70' : 'bg-secondary-800/70 hover:bg-secondary-800/90 text-secondary-200 border-secondary-700/60'} shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -829,7 +767,7 @@ const ChatInterface = () => {
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-red-300">{state.language === 'ml' ? 'പിശക്' : 'Error'}</h4>
+                <h4 className="font-semibold text-red-300">{t.error}</h4>
                 <p className="text-red-400 text-sm">{state.error}</p>
               </div>
             </div>

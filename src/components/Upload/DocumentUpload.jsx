@@ -16,62 +16,13 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
-
-const translations = {
-  en: {
-    uploadTitle: "Upload Document",
-    uploadDescription:
-      "Upload PDFs or images for intelligent processing to reduce information latency",
-    processingComplete: "Processing Complete!",
-    summary: "Summary",
-    departments: "Relevant Departments",
-    askQuestions: "Ask Questions",
-    downloadReport: "Download Report",
-    dropFiles: "Drop files here",
-    uploadPrompt: "Upload Document",
-    supportedFormats: "Supported formats: PDF, PNG, JPG, JPEG",
-    maxSize: "Maximum file size: 50MB",
-    selectedFiles: "Selected Files",
-    processDocument: "Process Document",
-    processing: "Processing...",
-    howItWorks: "How it works",
-    step1: "Upload",
-    step1Desc: "Upload your PDF or image document",
-    step2: "Process",
-    step2Desc: "AI analyzes to address siloed awareness",
-    step3: "Interact",
-    step3Desc: "Ask questions to mitigate compliance exposure"
-  },
-  ml: {
-    uploadTitle: "ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക",
-    uploadDescription: "വിവര വൈകല്യം കുറയ്ക്കാൻ PDF-കളോ ചിത്രങ്ങളോ അപ്‌ലോഡ് ചെയ്യുക",
-    processingComplete: "പ്രോസസ്സിംഗ് പൂർത്തിയായി!",
-    summary: "സംഗ്രഹം",
-    departments: "ബന്ധപ്പെട്ട വകുപ്പുകൾ",
-    askQuestions: "ചോദ്യങ്ങൾ ചോദിക്കുക",
-    downloadReport: "റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക",
-    dropFiles: "ഫയലുകൾ ഇവിടെ ഡ്രോപ്പ് ചെയ്യുക",
-    uploadPrompt: "ഡോക്യുമെന്റ് അപ്‌ലോഡ്",
-    supportedFormats: "പിന്തുണയ്ക്കുന്ന ഫോർമാറ്റുകൾ: PDF, PNG, JPG, JPEG",
-    maxSize: "പരമാവധി ഫയൽ വലുപ്പം: 50MB",
-    selectedFiles: "തിരഞ്ഞെടുത്ത ഫയലുകൾ",
-    processDocument: "ഡോക്യുമെന്റ് പ്രോസസ്സ് ചെയ്യുക",
-    processing: "പ്രോസസ്സിംഗ്...",
-    howItWorks: "ഇത് എങ്ങനെ പ്രവർത്തിക്കുന്നു",
-    step1: "അപ്‌ലോഡ്",
-    step1Desc: "നിന്റെ PDF അല്ലെങ്കിൽ ചിത്ര ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക",
-    step2: "പ്രോസസ്സ്",
-    step2Desc: "സിലോഡ് അവേർനെസ് പരിഹരിക്കാൻ AI വിശകലനം ചെയ്യുന്നു",
-    step3: "സംവദിക്കുക",
-    step3Desc: "നിയന്ത്രണ എക്സ്പോഷർ ലഘൂകരിക്കാൻ ചോദ്യങ്ങൾ ചോദിക്കുക"
-  }
-};
+import { translations } from "../../locales/translations";
 
 const DocumentUpload = () => {
   const { state, actions } = useApp();
   const [files, setFiles] = useState([]);
   const navigate = useNavigate();
-  const t = translations[state.language];
+  const t = translations[state.language].upload;
 
   const onDrop = useCallback(
     (acceptedFiles) => {
@@ -85,15 +36,13 @@ const DocumentUpload = () => {
         const isValidSize = file.size <= 50 * 1024 * 1024; // 50MB
         if (!isValidType) {
           toast.error(
-            state.language === "ml" ? "അസാധുവായ ഫയൽ തരം" : "Invalid file type"
+            t.invalidFileType
           );
           return false;
         }
         if (!isValidSize) {
           toast.error(
-            state.language === "ml"
-              ? "ഫയൽ വലുപ്പം 50MB-ൽ കൂടുതലാണ്"
-              : "File size exceeds 50MB"
+            t.fileSizeExceeded
           );
           return false;
         }
@@ -101,7 +50,7 @@ const DocumentUpload = () => {
       });
       setFiles((prev) => [...prev, ...validFiles]);
     },
-    [state.language]
+    [t]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -121,9 +70,7 @@ const DocumentUpload = () => {
   const handleUpload = async () => {
     if (files.length === 0) {
       toast.error(
-        state.language === "ml"
-          ? "അപ്‌ലോഡ് ചെയ്യാൻ ഫയലുകൾ തിരഞ്ഞെടുക്കുക"
-          : "Please select files to upload"
+        t.selectFiles
       );
       return;
     }
@@ -135,7 +82,7 @@ const DocumentUpload = () => {
       navigate("/chat");
     } catch (error) {
       toast.error(
-        state.language === "ml" ? "അപ്‌ലോഡ് പരാജയപ്പെട്ടു" : "Upload failed"
+        t.uploadFailed
       );
     }
   };
@@ -286,12 +233,16 @@ const DocumentUpload = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() =>
-                      handleViewDocument(state.currentDocument.mongo_id)
+                      handleViewDocument(
+                        state.currentDocument.mongo_id ||
+                          state.currentDocument._id?.$oid ||
+                          state.currentDocument._id
+                      )
                     }
                     className="px-4 py-2 bg-metro-blue hover:bg-metro-blue/80 rounded-lg text-white font-medium flex items-center justify-center space-x-2"
                   >
                     <Eye className="w-4 h-4" />
-                    <span>{state.language === "ml" ? "കാണുക" : "View"}</span>
+                    <span>{t.view}</span>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -363,7 +314,7 @@ const DocumentUpload = () => {
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-semibold text-red-300">
-                  {state.language === "ml" ? "പിശക്" : "Error"}
+                  {t.error}
                 </h4>
                 <p className="text-red-400 text-sm">{state.error}</p>
               </div>
@@ -381,7 +332,7 @@ const DocumentUpload = () => {
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-semibold text-green-300">
-                  {state.language === "ml" ? "വിജയം" : "Success"}
+                  {t.success}
                 </h4>
                 <p className="text-green-400 text-sm">{state.success}</p>
               </div>

@@ -1,40 +1,10 @@
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { apiService, useApp } from "../../context/AppContext";
-
-// Translations
-const translations = {
-  en: {
-    totalDocuments: "Total Documents",
-    departmentsInvolved: "Departments Involved",
-    emailsExtracted: "Emails Extracted",
-    recentDocuments: "Recent Documents",
-    recentlyUploaded: "Recently Uploaded",
-    summary: "Summary",
-    extractedText: "Extracted Text",
-    departments: "Departments",
-    emailData: "Email Data",
-    timestamp: "Timestamp",
-    chatButton: "Chat with this Document",
-    noEmailData: "No email data available",
-  },
-  ml: {
-    totalDocuments: "മൊത്തം ഡോക്യുമെന്റുകൾ",
-    departmentsInvolved: "വകുപ്പുകൾ",
-    emailsExtracted: "ഇമെയിലുകൾ എടുത്തത്",
-    recentDocuments: "സമീപകാല ഡോക്യുമെന്റുകൾ",
-    recentlyUploaded: "സമീപകാല അപ്‌ലോഡ്",
-    summary: "സംഗ്രഹം",
-    extractedText: "എക്സ്ട്രാക്ട് ചെയ്തത്",
-    departments: "വകുപ്പുകൾ",
-    emailData: "ഇമെയിൽ ഡാറ്റ",
-    timestamp: "സമയമുദ്ര",
-    chatButton: "ഈ ഡോക്യുമെന്റുമായി ചാറ്റ് ചെയ്യുക",
-    noEmailData: "ഇമെയിൽ ഡാറ്റ ലഭ്യമല്ല",
-  },
-};
+import { useNavigate, useParams } from "react-router-dom";
+import { useApp } from "../../context/AppContext";
+import { apiService } from "../../services/apiService";
+import { translations } from "../../locales/translations";
 
 // Collapsible Section Component
 const CollapsibleSection = ({ title, children, language, defaultOpen = false }) => {
@@ -53,9 +23,13 @@ const CollapsibleSection = ({ title, children, language, defaultOpen = false }) 
   );
 };
 
+const getDocumentId = (document) =>
+  String(document.mongo_id || document._id?.$oid || document._id || "");
+
 const DocumentViewer = () => {
   const { state, actions } = useApp();
   const navigate = useNavigate();
+  const { id } = useParams();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,7 +45,7 @@ const DocumentViewer = () => {
   const [department, setDepartment] = useState("");
   const [departmentsList, setDepartmentsList] = useState([]);
 
-  const t = translations[state.language || "en"];
+  const t = translations[state.language || "en"].documents;
 
   const filteredDocs = useMemo(() => {
     const s = (search || "").toLowerCase();
@@ -121,7 +95,32 @@ const DocumentViewer = () => {
     const load = async () => {
       try {
         setLoading(true);
-    const res = await apiService.getDocuments(page, limit);
+        setError(null);
+        if (id) {
+          const document = await apiService.getDocumentById(id);
+          if (ignore) return;
+          if (!document) {
+            setDocuments([]);
+            setError("notFound");
+            return;
+          }
+          setDocuments([document]);
+          setTotal(1);
+          setTotalPages(1);
+          setHasNext(false);
+          setHasPrev(false);
+          setDepartmentsList(
+            Array.from(
+              new Set(
+                (document.departments || [])
+                  .map((department) => department.name)
+                  .filter(Boolean)
+              )
+            ).sort()
+          );
+          return;
+        }
+        const res = await apiService.getDocuments(page, limit);
         if (ignore) return;
         const data = res.data || res.documents || [];
         setDocuments(data);
@@ -147,14 +146,16 @@ const DocumentViewer = () => {
     return () => {
       ignore = true;
     };
-  }, [page, limit]);
+  }, [id, page, limit]);
 
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="spinner w-8 h-8 border-4 border-t-transparent border-primary rounded-full animate-spin" /></div>;
-  if (error || !documents || documents.length === 0) return <div className="flex items-center justify-center h-screen"><div className="text-error text-xl">{error || "No documents found"}</div></div>;
+  if (error || !documents || documents.length === 0) return <div className="flex items-center justify-center h-screen"><div className="text-error text-xl">{error === "notFound" ? t.documentNotFound : error || "No documents found"}</div></div>;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="container mx-auto px-4 py-8">
 
+      {!id && (
+      <>
       {/* Filters & Search */}
       <div className="glass p-4 rounded-xl shadow-metro-lg mb-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -162,7 +163,7 @@ const DocumentViewer = () => {
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder={state.language === 'ml' ? 'തിരയുക (ഫയൽ/ടെക്സ്റ്റ്/സംഗ്രഹം)...' : 'Search (filename/text/summary)'}
+            placeholder={t.searchPlaceholder}
             className="w-full px-3 py-2 rounded-lg bg-secondary-800 border border-secondary-700 text-white placeholder-secondary-400 focus:outline-none focus:border-primary-500"
           />
           <select
@@ -170,7 +171,7 @@ const DocumentViewer = () => {
             onChange={(e) => { setDepartment(e.target.value); setPage(1); }}
             className="w-full px-3 py-2 rounded-lg bg-secondary-800 border border-secondary-700 text-white focus:outline-none focus:border-primary-500"
           >
-            <option value="">{state.language === 'ml' ? 'എല്ലാ വകുപ്പുകളും' : 'All Departments'}</option>
+            <option value="">{t.allDepartments}</option>
             {departmentsList.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -189,11 +190,13 @@ const DocumentViewer = () => {
               onClick={() => { setSearchText(""); setDepartment(""); setPage(1); }}
               className="px-4 py-2 rounded-lg border border-secondary-700 bg-secondary-800 hover:bg-secondary-700 text-white"
             >
-              {state.language === 'ml' ? 'ക്ലിയർ' : 'Clear'}
+              {t.clear}
             </button>
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Analytics */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -215,6 +218,8 @@ const DocumentViewer = () => {
         </div>
       </motion.div>
 
+      {!id && (
+      <>
       {/* Recent Docs */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-12">
         <h2 className="text-2xl font-semibold mb-4">{t.recentlyUploaded}</h2>
@@ -227,6 +232,8 @@ const DocumentViewer = () => {
           ))}
         </div>
       </motion.div>
+      </>
+      )}
 
   {/* All Documents */}
   <div className="grid gap-8">
@@ -260,36 +267,48 @@ const DocumentViewer = () => {
             </div>
 
             <div className="flex justify-end mt-6">
-              <button className="btn-metro" onClick={() => { actions.setCurrentDocument(doc); navigate("/chat"); }}>{t.chatButton}</button>
+              <div className="flex gap-3">
+                {!id && (
+                  <button
+                    className="btn-metro"
+                    onClick={() => navigate(`/documents/${getDocumentId(doc)}`)}
+                  >
+                    {t.viewDocument}
+                  </button>
+                )}
+                <button className="btn-metro" onClick={() => { actions.setCurrentDocument(doc); navigate("/chat"); }}>{t.chatButton}</button>
+              </div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between mt-8">
-        <div className="text-text-secondary">
-          {state.language === 'ml'
-            ? `ആകെ: ${total} | പേജ് ${page}/${totalPages}`
-            : `Total: ${total} | Page ${page}/${totalPages}`}
+      {!id && (
+        <div className="flex items-center justify-between mt-8">
+          <div className="text-text-secondary">
+            {t.pageInfo
+              .replace("{total}", total)
+              .replace("{page}", page)
+              .replace("{totalPages}", totalPages)}
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={!hasPrev || page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-4 py-2 rounded-lg border border-secondary-700 bg-secondary-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-700 text-white"
+            >
+              {t.previous}
+            </button>
+            <button
+              disabled={!hasNext || page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 disabled:cursor-not-allowed text-white"
+            >
+              {t.next}
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            disabled={!hasPrev || page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-4 py-2 rounded-lg border border-secondary-700 bg-secondary-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-700 text-white"
-          >
-            {state.language === 'ml' ? 'മുൻപ്' : 'Previous'}
-          </button>
-          <button
-            disabled={!hasNext || page >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 disabled:cursor-not-allowed text-white"
-          >
-            {state.language === 'ml' ? 'അടുത്തത്' : 'Next'}
-          </button>
-        </div>
-      </div>
+      )}
     </motion.div>
   );
 };

@@ -371,39 +371,6 @@ const Analytics = () => {
         </ChartCard>
       </div>
 
-      {/* Accuracy Trends */}
-      <ChartCard title="AI Accuracy & Confidence Trends" icon={Zap} fullWidth>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={analyticsData.accuracyTrends}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="day" stroke="#9ca3af" />
-            <YAxis stroke="#9ca3af" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1f2937', 
-                border: '1px solid #374151',
-                borderRadius: '8px'
-              }}
-            />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="accuracy" 
-              stroke="#10b981" 
-              strokeWidth={3}
-              dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="confidence" 
-              stroke="#f59e0b" 
-              strokeWidth={3}
-              dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
     
 
       {/* Performance Summary */}

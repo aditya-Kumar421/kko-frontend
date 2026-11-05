@@ -26,46 +26,7 @@ import {
   YAxis
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
-const translations = {
-  en: {
-    welcome: 'Welcome to SoochiRail Dashboard',
-    description: 'Your intelligent document processing and knowledge management system addressing information latency and siloed awareness.',
-    totalDocuments: 'Total Documents',
-    questionsAsked: 'Questions Asked',
-    avgProcessingTime: 'Avg Processing Time',
-    activeDepartments: 'Active Departments',
-    weeklyActivity: 'Weekly Activity',
-    departmentUsage: 'Department Usage',
-    quickActions: 'Quick Actions',
-    uploadDocument: 'Upload Document',
-    uploadDescription: 'Process a new PDF or image document',
-    askAssistant: 'Ask AI Assistant',
-    askDescription: 'Get answers to address compliance exposure and knowledge attrition',
-    recentActivity: 'Recent Activity',
-    noActivity: 'No recent activity',
-    noActivityMessage: 'Upload a document to get started',
-    processingTime: 'Processing Time Distribution'
-  },
-  ml: {
-    welcome: 'SoochiRail ഡാഷ്ബോർഡിലേക്ക് സ്വാഗതം',
-    description: 'വിവര വൈകല്യവും സിലോഡ് അവേർനെസും പരിഹരിക്കുന്ന നിന്റെ ബുദ്ധിപരമായ ഡോക്യുമെന്റ് പ്രോസസ്സിംഗും അറിവ് മാനേജ്മെന്റ് സിസ്റ്റവും.',
-    totalDocuments: 'മൊത്തം ഡോക്യുമെന്റുകൾ',
-    questionsAsked: 'ചോദിച്ച ചോദ്യങ്ങൾ',
-    avgProcessingTime: 'ശരാശരി പ്രോസസ്സിംഗ് സമയം',
-    activeDepartments: 'സജീവ വകുപ്പുകൾ',
-    weeklyActivity: 'പ്രതിവാര പ്രവർത്തനം',
-    departmentUsage: 'വകുപ്പ് ഉപയോഗം',
-    quickActions: 'പെട്ടെന്നുള്ള പ്രവർത്തനങ്ങൾ',
-    uploadDocument: 'ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക',
-    uploadDescription: 'പുതിയ PDF അല്ലെങ്കിൽ ഇമേജ് ഡോക്യുമെന്റ് പ്രോസസ്സ് ചെയ്യുക',
-    askAssistant: 'എഐ അസിസ്റ്റന്റിനോട് ചോദിക്കുക',
-    askDescription: 'നിയന്ത്രണ എക്സ്പോഷറും അറിവ് നഷ്ടവും പരിഹരിക്കാൻ ഉത്തരങ്ങൾ നേടുക',
-    recentActivity: 'സമീപകാല പ്രവർത്തനം',
-    noActivity: 'സമീപകാല പ്രവർത്തനങ്ങൾ ഇല്ല',
-    noActivityMessage: 'ആരംഭിക്കാൻ ഒരു ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക',
-    processingTime: 'പ്രോസസ്സിംഗ് സമയ വിതരണം'
-  }
-};
+import { translations } from "../../locales/translations";
 
 const StatCard = ({ icon: Icon, label, value, change, color = "primary", trend }) => (
   <motion.div
@@ -142,7 +103,7 @@ const RecentActivityItem = ({ activity }) => (
 const Dashboard = () => {
   const { state } = useApp();
   const navigate = useNavigate();
-  const t = translations[state.language];
+  const t = translations[state.language].dashboard;
 
   const activityData = [
     { name: 'Mon', documents: 12, questions: 45 },

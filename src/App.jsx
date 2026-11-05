@@ -15,6 +15,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import DocumentViewer from "./components/Document/DocumentViewer";
 import Layout from "./components/Layout/Layout";
 import DocumentUpload from "./components/Upload/DocumentUpload";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Context
 import { AppProvider } from "./context/AppContext";
@@ -25,24 +26,22 @@ import "./index.css";
  * Metro background with animated lines, stations, and particles
  */
 const MetroBackground = () => (
-  <div className="fixed inset-0 -z+1 overflow-hidden">
-    {/* 🔹 Background video */}
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      className="absolute inset-0 w-full h-full object-cover opacity-10"
-    >
-      <source src="/assets/Kochi_Metro_Video_Generation.mp4" type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-
-    Gradient overlay
+  <div className="fixed inset-0 z-0 overflow-hidden">
+    {process.env.REACT_APP_BACKGROUND_VIDEO_URL && (
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover opacity-10"
+      >
+        <source
+          src={process.env.REACT_APP_BACKGROUND_VIDEO_URL}
+          type="video/mp4"
+        />
+      </video>
+    )}
     <div className="absolute inset-0 bg-gradient-to-br from-secondary-950/60 via-secondary-900/50 to-primary-950/60" />
-
-   
-
     {/* Metro Stations */}
     <div className="absolute inset-0">
       {[
@@ -99,44 +98,43 @@ const MetroBackground = () => (
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <div className="min-h-screen bg-secondary-950 text-white font-metro relative overflow-hidden">
-          {/* Background */}
-          <MetroBackground />
+    <ErrorBoundary>
+      <AppProvider>
+        <Router>
+          <div className="min-h-screen bg-secondary-950 text-white font-metro relative overflow-hidden">
+            <MetroBackground />
+            <div className="relative z-10">
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/upload" element={<DocumentUpload />} />
+                  <Route path="/documents" element={<DocumentViewer />} />
+                  <Route path="/documents/:id" element={<DocumentViewer />} />
+                  <Route path="/chat" element={<ChatInterface />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </Layout>
+            </div>
 
-          {/* Foreground */}
-          <div className="relative z-10">
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/upload" element={<DocumentUpload />} />
-                <Route path="/documents/:id" element={<DocumentViewer />} />
-                <Route path="/chat" element={<ChatInterface />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </Layout>
+            <ToastContainer
+              position="bottom-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+              className="z-50"
+            />
           </div>
-
-          {/* Toasts */}
-          <ToastContainer
-            position="bottom-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="dark"
-            className="z-50"
-          />
-        </div>
-      </Router>
-    </AppProvider>
+        </Router>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 

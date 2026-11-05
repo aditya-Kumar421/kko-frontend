@@ -3,38 +3,20 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
-
-const translations = {
-  en: {
-    dashboard: "Dashboard",
-    upload: "Upload Document",
-    chat: "AI Assistant",
-    analytics: "Analytics",
-    documents: "Documents",
-    language: "Language: English",
-  },
-  ml: {
-    dashboard: "ഡാഷ്ബോർഡ്",
-    upload: "ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്യുക",
-    chat: "എഐ അസിസ്റ്റന്റ്",
-    analytics: "അനലിറ്റിക്സ്",
-    documents: "ഡോക്യുമെന്റുകൾ",
-    language: "ഭാഷ: മലയാളം",
-  },
-};
+import { translations } from "../../locales/translations";
 
 const navItems = [
   { to: "/dashboard", key: "dashboard" },
   { to: "/upload", key: "upload" },
   { to: "/chat", key: "chat" },
   { to: "/analytics", key: "analytics" },
-  { to: "/documents/mock123", key: "documents" },
+  { to: "/documents", key: "documents" },
 ];
 
 const Layout = ({ children }) => {
   const { state, actions } = useApp();
   const [isOpen, setIsOpen] = useState(false);
-  const t = translations[state.language];
+  const t = translations[state.language].layout;
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
