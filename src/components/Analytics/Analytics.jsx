@@ -9,8 +9,7 @@ import {
     MessageSquare,
     Target,
     TrendingUp,
-    Users,
-    Zap
+    Users
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -22,8 +21,6 @@ import {
     Cell,
     ComposedChart,
     Legend,
-    Line,
-    LineChart,
     Pie,
     PieChart,
     ResponsiveContainer,
